@@ -1,0 +1,19 @@
+.about-page { padding: 64px 0 80px; }
+.about-header { margin-bottom: 48px; }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+.about-text { display: flex; flex-direction: column; gap: 18px; color: var(--color-slate-light); line-height: 1.8; }
+.about-text strong { color: var(--color-slate); }
+.about-values { display: flex; flex-direction: column; gap: 16px; }
+.value-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.value-icon { font-size: 1.6rem; }
+.value-card h3 { font-family: var(--font-display); color: var(--color-forest); font-size: 1.05rem; }
+.value-card p { font-size: 0.9rem; color: var(--color-slate-light); }
+@media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; } }

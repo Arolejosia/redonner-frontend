@@ -1,0 +1,21 @@
+.contact-page { padding: 64px 0 80px; }
+.contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 40px; }
+.contact-info { display: flex; flex-direction: column; gap: 24px; }
+.contact-item { display: flex; gap: 16px; align-items: flex-start; }
+.contact-icon { font-size: 1.4rem; margin-top: 2px; }
+.contact-item strong { display: block; font-weight: 600; color: var(--color-slate); margin-bottom: 4px; }
+.contact-item p, .contact-item a { color: var(--color-slate-light); font-size: 0.95rem; }
+.contact-item a:hover { color: var(--color-forest); }
+.contact-cta-card {
+  background: var(--color-forest);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.contact-cta-card h2 { font-family: var(--font-display); font-size: 1.5rem; }
+.contact-cta-card p { opacity: 0.85; line-height: 1.6; }
+.contact-cta-card .btn-primary { background: white; color: var(--color-forest); align-self: flex-start; }
+@media (max-width: 768px) { .contact-grid { grid-template-columns: 1fr; } }
