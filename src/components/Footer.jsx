@@ -26,8 +26,8 @@ export default function Footer() {
         </div>
         <div className="footer-contact">
           <h4>Contact</h4>
-          <p><a href="tel:+15815744688">+1 581 574-4688</a></p>
-          <p><a href="mailto:info@redonner.ca">info@redonner.ca</a></p>
+          <p><a href="tel:3435587959">343 558-7959</a></p>
+          <p><a href="mailto:lelenembot@gmail.com">lelenembot@gmail.com</a></p>
           <p>Ottawa & Gatineau</p>
         </div>
       </div>
