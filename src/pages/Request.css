@@ -369,3 +369,81 @@
   .request-sidebar { grid-template-columns: 1fr; }
   .photo-preview-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Contact methods ── */
+.contact-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.contact-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 32px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--color-slate);
+  transition: all 0.2s;
+  background: var(--color-cream);
+}
+.contact-pill input { display: none; }
+.contact-pill.selected {
+  border-color: var(--color-forest);
+  background: var(--color-forest);
+  color: white;
+}
+.contact-pill:hover:not(.selected) { border-color: var(--color-forest); }
+.pill-icon { font-size: 1rem; }
+
+/* ── Privacy note ── */
+.privacy-note {
+  margin-top: 16px;
+  font-size: 0.8rem;
+  color: var(--color-slate-light);
+  background: var(--color-cream);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  line-height: 1.5;
+}
+
+/* ── Address row with locate button ── */
+.address-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.address-row input { flex: 1; }
+
+.btn-locate {
+  white-space: nowrap;
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-forest);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  color: var(--color-forest);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-locate:hover { background: var(--color-forest); color: white; }
+.btn-locate:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Optional label ── */
+.label-optional {
+  font-weight: 400;
+  color: var(--color-slate-light);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 480px) {
+  .address-row { flex-direction: column; }
+  .contact-pill { font-size: 0.8rem; padding: 8px 12px; }
+}

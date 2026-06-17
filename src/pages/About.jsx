@@ -23,7 +23,7 @@ export default function About() {
             </p>
             <p>
               <strong>ReDonner est une entreprise privée</strong> de récupération et de réemploi basée
-              à Ottawa, Ontario. Les objets acceptés sont cédés gratuitement lors du ramassage.
+              à Ottawa, Ontario. On vient chercher ce dont vous n'avez plus besoin. Gratuitement. Sans tracas.
             </p>
           </div>
           <div className="about-values">

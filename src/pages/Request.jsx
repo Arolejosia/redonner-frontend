@@ -14,27 +14,41 @@ const OBJECT_TYPES = [
 const CONDITIONS = ['Excellent', 'Bon', 'Acceptable'];
 const PERIODES   = ['Matin (8h–12h)', 'Après-midi (12h–17h)', 'Soir (17h–20h)'];
 
+const CONTACT_METHODS = [
+  { value: 'email',     label: 'Email',       icon: '📧', placeholder: 'votre@email.com',     type: 'email' },
+  { value: 'whatsapp',  label: 'WhatsApp',    icon: '💬', placeholder: '+1 613-555-1234',      type: 'tel' },
+  { value: 'sms',       label: 'SMS/Téléphone', icon: '📱', placeholder: '+1 613-555-1234',   type: 'tel' },
+  { value: 'messenger', label: 'Messenger',   icon: '💙', placeholder: 'Votre nom Messenger',  type: 'text' },
+  { value: 'instagram', label: 'Instagram',   icon: '📸', placeholder: '@votre_username',      type: 'text' },
+  { value: 'snapchat',  label: 'Snapchat',    icon: '👻', placeholder: '@votre_username',      type: 'text' },
+];
+
 export default function Request() {
   const navigate = useNavigate();
   const fileRef  = useRef(null);
 
   const [form, setForm] = useState({
-    nom: '', telephone: '', courriel: '',
-    adresse: '', ville: '',
-    typeObjet: '', description: '', etat: '', dimensions: '',
-    depotExterieur: '', // 'oui' | 'non'
+    contactMethod: '',
+    contactValue: '',
+    adresse: '',
+    ville: '',
+    typeObjet: '',
+    description: '',
+    etat: '',
+    dimensions: '',
+    depotExterieur: '',
   });
 
-  // 3 disponibilités (seulement si depotExterieur === 'non')
   const [dispos, setDispos] = useState([
     { date: '', periode: '' },
     { date: '', periode: '' },
     { date: '', periode: '' },
   ]);
 
-  const [photos,     setPhotos]     = useState([]);
-  const [errors,     setErrors]     = useState({});
-  const [submitting, setSubmitting] = useState(false);
+  const [photos,       setPhotos]       = useState([]);
+  const [errors,       setErrors]       = useState({});
+  const [submitting,   setSubmitting]   = useState(false);
+  const [locLoading,   setLocLoading]   = useState(false);
 
   const set = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -42,7 +56,39 @@ export default function Request() {
   const setDispo = (idx, field, value) =>
     setDispos((prev) => prev.map((d, i) => i === idx ? { ...d, [field]: value } : d));
 
-  // ── Photos ──────────────────────────────────────────────────────────────────
+  // ── Géolocalisation ────────────────────────────────────────────────────────
+  const getLocation = () => {
+    if (!navigator.geolocation) {
+      alert("La géolocalisation n'est pas supportée par votre navigateur.");
+      return;
+    }
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res  = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          );
+          const data = await res.json();
+          const addr = data.address;
+          const rue  = [addr.house_number, addr.road].filter(Boolean).join(' ');
+          const ville = addr.city || addr.town || addr.village || addr.municipality || '';
+          setForm((prev) => ({ ...prev, adresse: rue, ville }));
+        } catch {
+          alert("Impossible de récupérer l'adresse. Entrez-la manuellement.");
+        } finally {
+          setLocLoading(false);
+        }
+      },
+      () => {
+        alert("Permission refusée. Entrez votre adresse manuellement.");
+        setLocLoading(false);
+      }
+    );
+  };
+
+  // ── Photos ─────────────────────────────────────────────────────────────────
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
     if (photos.length + files.length > 10) { alert('Maximum 10 photos.'); return; }
@@ -53,21 +99,18 @@ export default function Request() {
   };
   const removePhoto = (idx) => setPhotos((prev) => prev.filter((_, i) => i !== idx));
 
-  // ── Validation ───────────────────────────────────────────────────────────────
+  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e = {};
-    if (!form.nom.trim())            e.nom        = 'Requis';
-    if (!form.telephone.trim())      e.telephone  = 'Requis';
-    if (!form.courriel.includes('@')) e.courriel  = 'Courriel invalide';
-    if (!form.adresse.trim())        e.adresse    = 'Requis';
-    if (!form.ville.trim())          e.ville      = 'Requis';
-    if (!form.typeObjet)             e.typeObjet  = 'Requis';
-    if (!form.description.trim())    e.description= 'Requis';
-    if (!form.etat)                  e.etat       = 'Requis';
-    if (!form.depotExterieur)        e.depotExterieur = 'Choisissez une option';
-    if (photos.length < 1)           e.photos     = 'Ajoutez au moins 1 photo';
-
-    // Si rendez-vous nécessaire → au moins 1 dispo complète
+    if (!form.contactMethod)          e.contactMethod  = 'Choisissez un moyen de contact';
+    if (!form.contactValue.trim())    e.contactValue   = 'Requis';
+    if (!form.adresse.trim())         e.adresse        = 'Requis';
+    if (!form.ville.trim())           e.ville          = 'Requis';
+    if (!form.typeObjet)              e.typeObjet      = 'Requis';
+    if (!form.description.trim())     e.description    = 'Requis';
+    if (!form.etat)                   e.etat           = 'Requis';
+    if (!form.depotExterieur)         e.depotExterieur = 'Choisissez une option';
+    if (photos.length < 1)            e.photos         = 'Ajoutez au moins 1 photo';
     if (form.depotExterieur === 'non') {
       const valides = dispos.filter((d) => d.date && d.periode);
       if (valides.length === 0) e.dispos = 'Ajoutez au moins une disponibilité';
@@ -75,12 +118,11 @@ export default function Request() {
     return e;
   };
 
-  // ── Soumission ───────────────────────────────────────────────────────────────
+  // ── Soumission ─────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     setSubmitting(true);
-
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
@@ -88,7 +130,6 @@ export default function Request() {
         dispos.filter((d) => d.date && d.periode)
       ));
       photos.forEach((p) => fd.append('photos', p.file));
-
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/api/requests`, {
         method: 'POST', body: fd,
       });
@@ -101,20 +142,19 @@ export default function Request() {
     }
   };
 
+  const selectedMethod = CONTACT_METHODS.find((m) => m.value === form.contactMethod);
   const depotOui = form.depotExterieur === 'oui';
   const depotNon = form.depotExterieur === 'non';
 
   return (
     <div className="request-page">
       <div className="container">
-
         <div className="request-header">
           <span className="section-label">Formulaire</span>
           <h1 className="section-title">Demander un ramassage</h1>
           <div className="divider" />
           <p className="request-intro">
-            Remplissez ce formulaire en une seule fois. Nous vous confirmons
-            par courriel si votre objet est admissible — aucun appel nécessaire.
+            Remplissez ce formulaire en une seule fois — aucun appel nécessaire.
           </p>
         </div>
 
@@ -123,43 +163,59 @@ export default function Request() {
         <div className="request-layout">
           <div className="request-form">
 
-            {/* ── 1. Coordonnées ── */}
+            {/* ── 1. Contact ── */}
             <fieldset className="form-section">
-              <legend><span className="legend-num">1</span> Vos coordonnées</legend>
+              <legend><span className="legend-num">1</span> Comment vous contacter ?</legend>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Nom complet *</label>
-                  <input type="text" value={form.nom} onChange={set('nom')}
-                    placeholder="Jean Tremblay" />
-                  {errors.nom && <span className="field-error">{errors.nom}</span>}
-                </div>
-                <div className="form-group">
-                  <label>Téléphone *</label>
-                  <input type="tel" value={form.telephone} onChange={set('telephone')}
-                    placeholder="613-555-1234" />
-                  {errors.telephone && <span className="field-error">{errors.telephone}</span>}
-                </div>
+              <div className="contact-methods">
+                {CONTACT_METHODS.map((m) => (
+                  <label key={m.value}
+                    className={`contact-pill ${form.contactMethod === m.value ? 'selected' : ''}`}>
+                    <input type="radio" name="contactMethod" value={m.value}
+                      checked={form.contactMethod === m.value}
+                      onChange={() => setForm((prev) => ({ ...prev, contactMethod: m.value, contactValue: '' }))} />
+                    <span className="pill-icon">{m.icon}</span>
+                    <span>{m.label}</span>
+                  </label>
+                ))}
               </div>
+              {errors.contactMethod && <span className="field-error">{errors.contactMethod}</span>}
 
-              <div className="form-group">
-                <label>Courriel *</label>
-                <input type="email" value={form.courriel} onChange={set('courriel')}
-                  placeholder="jean@exemple.com" />
-                {errors.courriel && <span className="field-error">{errors.courriel}</span>}
-              </div>
+              {selectedMethod && (
+                <div className="form-group" style={{ marginTop: 16 }}>
+                  <label>{selectedMethod.icon} Votre {selectedMethod.label} *</label>
+                  <input
+                    type={selectedMethod.type}
+                    value={form.contactValue}
+                    onChange={set('contactValue')}
+                    placeholder={selectedMethod.placeholder}
+                  />
+                  {errors.contactValue && <span className="field-error">{errors.contactValue}</span>}
+                </div>
+              )}
+
+              <p className="privacy-note">
+                🔒 Vos coordonnées sont utilisées uniquement pour vous contacter au sujet de votre demande.
+                Nous ne vendons jamais vos informations à des tiers.
+              </p>
             </fieldset>
 
-            {/* ── 2. Adresse de ramassage ── */}
+            {/* ── 2. Adresse ── */}
             <fieldset className="form-section">
               <legend><span className="legend-num">2</span> Adresse de ramassage</legend>
 
               <div className="form-group">
                 <label>Adresse complète *</label>
-                <input type="text" value={form.adresse} onChange={set('adresse')}
-                  placeholder="123 rue Principale, App. 4" />
+                <div className="address-row">
+                  <input type="text" value={form.adresse} onChange={set('adresse')}
+                    placeholder="123 rue Principale, App. 4" />
+                  <button type="button" className="btn-locate" onClick={getLocation} disabled={locLoading}>
+                    {locLoading ? '⏳' : '📍'} {locLoading ? 'Recherche…' : 'Ma position'}
+                  </button>
+                </div>
                 {errors.adresse && <span className="field-error">{errors.adresse}</span>}
               </div>
+
               <div className="form-group">
                 <label>Ville *</label>
                 <input type="text" value={form.ville} onChange={set('ville')}
@@ -168,7 +224,7 @@ export default function Request() {
               </div>
             </fieldset>
 
-            {/* ── 3. L'objet ── */}
+            {/* ── 3. Objet ── */}
             <fieldset className="form-section">
               <legend><span className="legend-num">3</span> L'objet</legend>
 
@@ -203,7 +259,7 @@ export default function Request() {
                   {errors.etat && <span className="field-error">{errors.etat}</span>}
                 </div>
                 <div className="form-group">
-                  <label>Dimensions approximatives</label>
+                  <label>Dimensions approximatives <span className="label-optional">(facultatif)</span></label>
                   <input type="text" value={form.dimensions} onChange={set('dimensions')}
                     placeholder="Ex : 150 × 80 × 75 cm" />
                 </div>
@@ -225,7 +281,6 @@ export default function Request() {
                   <strong>Dépôt extérieur</strong>
                   <span>Je mets l'objet dehors — vous venez le chercher quand vous voulez</span>
                 </label>
-
                 <label className={`depot-card ${depotNon ? 'selected' : ''}`}>
                   <input type="radio" name="depot" value="non"
                     checked={depotNon} onChange={set('depotExterieur')} />
@@ -236,7 +291,6 @@ export default function Request() {
               </div>
               {errors.depotExterieur && <span className="field-error">{errors.depotExterieur}</span>}
 
-              {/* Disponibilités — seulement si rendez-vous */}
               {depotNon && (
                 <div className="dispos-section">
                   <p className="dispos-hint">
@@ -268,8 +322,7 @@ export default function Request() {
               <div className="photo-drop"
                 onClick={() => fileRef.current.click()}
                 onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => { e.preventDefault(); handlePhotos({ target: { files: e.dataTransfer.files } }); }}
-              >
+                onDrop={(e) => { e.preventDefault(); handlePhotos({ target: { files: e.dataTransfer.files } }); }}>
                 <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                   <path d="M18 6v16M10 14l8-8 8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M6 28h24" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -296,8 +349,7 @@ export default function Request() {
             {/* ── Soumettre ── */}
             <div className="form-submit">
               <p className="legal-note">
-                ReDonner est une entreprise privée de récupération et de réemploi.
-                Les objets acceptés sont cédés gratuitement lors du ramassage.
+                On vient chercher ce dont vous n'avez plus besoin. Gratuitement. Sans tracas.
               </p>
               <button className="btn-primary submit-btn" onClick={handleSubmit} disabled={submitting}>
                 {submitting ? 'Envoi en cours…' : 'Envoyer ma demande →'}
@@ -315,9 +367,9 @@ export default function Request() {
                 <li>
                   Si admissible :<br/>
                   <strong>Dépôt extérieur</strong> → on vient dans les 48h.<br/>
-                  <strong>Rendez-vous</strong> → on confirme un de vos créneaux par courriel.
+                  <strong>Rendez-vous</strong> → on confirme un de vos créneaux.
                 </li>
-                <li>Si refusé → vous recevez un courriel d'explication.</li>
+                <li>Si refusé → vous recevez une notification.</li>
               </ol>
             </div>
             <div className="sidebar-card sidebar-accepted">
